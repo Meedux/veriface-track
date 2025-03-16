@@ -2,7 +2,7 @@ import React from 'react'
 
 const page = () => {
   return (
-    <div>Initial as</div>
+    <div>Initiasl as</div>
   )
 }
 
