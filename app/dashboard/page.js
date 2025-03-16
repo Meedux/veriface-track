@@ -8,8 +8,8 @@ const page = () => {
 
       <div className="p-4 border-b border-gray-200 text-center">
         
-        <h2 class="mt-4 text-2xl">Hi Jaye Mark!</h2>
-        <p class="text-sm">Have a nice day</p>
+        <h2 className="mt-4 text-2xl">Hi Jaye Mark!</h2>
+        <p className="text-sm">Have a nice day</p>
       </div>
       
       {/* Navigation */}
