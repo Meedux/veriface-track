@@ -57,9 +57,9 @@ const page = () => {
     
     {/* Main Content */}
     <div className="flex-1 p-8 overflow-auto">
-       <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold">Dashboard</h1>
-        <div class="flex items-center space-x-4">
+       <header className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex items-center space-x-4">
           <FiMail className="text-2xl"></FiMail>
           <FiBell className="text-2xl"></FiBell>
           <CgProfile className="text-2xl"></CgProfile >
