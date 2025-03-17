@@ -1,5 +1,9 @@
 import React from 'react'
 import { IoIosArrowDown } from "react-icons/io";
+import { FiHome, FiCalendar, FiSettings, FiMail, FiBell  } from "react-icons/fi";
+import { TbSchool } from "react-icons/tb";
+import { CgProfile } from "react-icons/cg";
+import { FaRegCircle } from "react-icons/fa6";
 
 const page = () => {
   return (
@@ -8,7 +12,8 @@ const page = () => {
     <div className="box-border h-screen w-59 py-[5px] bg-base border-r-1 border-gray-300 sticky top-0 self-start sidebar" id="sidebar">
 
       <div className="p-4 border-b-1 border-gray-300 text-center">
-        <span>LOGO</span>
+        <span className="text-base font-extrabold">VeriFace Track</span>
+        <FaRegCircle className="ml-16 mt-3 text-7xl"></FaRegCircle >
         <h2 className="mt-4 text-2xl">Hi Jaye Mark!</h2>
         <p className="text-sm">Have a nice day</p>
       </div>
@@ -18,28 +23,31 @@ const page = () => {
         <ul className="space-y-2">
 
           <li>
-            <a href="#" className="block p-2 pl-4 rounded-lg bg-green-100 text-black">
-              Home
+            <a href="#" className="flex gap-3 items-center p-4 pl-4 pr-4 rounded-lg hover:bg-green-100 text-gray-700">
+              <FiHome className="text-2xl"></FiHome>
+              <span className="text-base">Home</span>
             </a>
           </li>
 
           <li>
-            <a href="#" className="block p-2 pl-4 rounded-lg hover:bg-green-100 text-gray-700">
-              Calendar
+            <a href="#" className="flex gap-3 items-center p-4 pl-4 pr-4 rounded-lg hover:bg-green-100 text-gray-700">
+              <FiCalendar className="text-2xl"></FiCalendar>
+              <span className="text-base">Calendar</span>
             </a>
           </li>
 
           <li>
-            <a href="#" className="flex p-2 pl-4 rounded-lg hover:bg-green-100 text-gray-700">
-              <span>Programs</span>
-              <span><IoIosArrowDown className="justify-end text-2x"/></span>
+            <a href="#" className="flex gap-3 items-center p-4 pl-4 pr-4 rounded-lg hover:bg-green-100 text-gray-700">
+              <TbSchool className="text-2xl"></TbSchool>
+              <span className="text-base">Programs</span>
+              <IoIosArrowDown className="text-ml ml-auto"></IoIosArrowDown>
             </a>
-            
           </li>
           
-          <li className="mt-90 mb-4">
-            <a href="#" className="block p-2 pl-4 rounded-lg hover:bg-gray-100 text-gray-700">
-              Settings
+          <li className="mt-80 mb-4">
+            <a href="#" className="flex gap-3 items-center p-4 pl-4 pr-4 rounded-lg hover:bg-green-100 text-gray-700">
+              <FiSettings className="text-2xl"></FiSettings>
+              <span className="text-base">Settings</span>
               
             </a>
           </li>
@@ -52,9 +60,9 @@ const page = () => {
        <header class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold">Dashboard</h1>
         <div class="flex items-center space-x-4">
-          <span class="material-icons">MAIL</span>
-          <span class="material-icons">NOTIF</span>
-          <span class="material-icons">ACCOUNT</span>
+          <FiMail className="text-2xl"></FiMail>
+          <FiBell className="text-2xl"></FiBell>
+          <CgProfile className="text-2xl"></CgProfile >
         </div>
       </header>
       
@@ -62,7 +70,7 @@ const page = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border-1 border-gray-300 p-5 rounded-lg ">
         <div className="bg-green-100 p-6 rounded-lg ">
           <h3 className="text-sm-semibold mb-2">Today</h3>
-          <p className="text-3xl font-extralight">March 17, 2024</p>
+          <p className="text-3xl font-extralight">03 / 17 / 2024</p>
         </div>
         
         <div className="bg-green-100 p-6 rounded-lg ">
