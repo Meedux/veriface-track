@@ -1,5 +1,4 @@
 import React from 'react'
-
 const page = () => {
   return (
     <div className="min-h-screen bg-[#E8F5E9] flex justify-between items-center">
@@ -14,7 +13,9 @@ const page = () => {
 
   <div className="flex flex-col items-center justify-center "> {/*container of logo and contents below it*/}
 
-    <div className="bg-[#E8F5E9] w-[9rem] h-[9rem] rounded-[50%] mt-[1.5rem] mb-[3rem]"></div>  {/*logo*/}
+    <div className="bg-[#E8F5E9] w-[9rem] h-[9rem] rounded-[50%] mt-[1.5rem] mb-[3rem]">
+    
+    </div>  {/*logo*/}
 
     <div className="bg-[#E8F5E9] h-[5rem] w-[27rem] rounded-[15] flex justify-end items-center mb-[3rem]"> {/*white container of the text header (sign up/login)*/}
       <a className="text-[1.3rem]" style={{ fontFamily: '"Segoe UI", sans-serif', fontWeight: '500' }}>Login</a>
