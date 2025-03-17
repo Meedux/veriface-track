@@ -3,7 +3,7 @@ import { SlArrowRight } from "react-icons/sl";
 import { LuScanFace } from "react-icons/lu";
 const page = () => {
   return (
-    <div className="min-h-screen bg-[#E8F5E9] flex justify-between items-center">
+    <div className="min-h-screen bg-[#E8F5E9] flex justify-between items-center"> 
           {/* Left section - text */}
           <div className="flex flex-col items-start ml-[15rem] mr-[2rem]">
             <h1 
@@ -77,7 +77,7 @@ const page = () => {
             <p className="text-[#473D3D] mr-[12rem] ml-[1rem]">Facial recognition</p>
             <span><SlArrowRight className="w-[1rem] h-[1rem]"/></span>
           </div>
-          <button  className="bg-[#0D8A3F] h-[3.7rem] w-[27rem] rounded-[10] flex justify-center items-center text-[white] text-[1.2rem]" style={{ fontFamily: '"Segoe UI", sans-serif' }}>COMPLETE SIGN UP</button>
+          <button  className="bg-[#0D8A3F] h-[3.7rem] w-[27rem] rounded-[10] flex justify-center items-center text-[white] text-[1.2rem] shadow-xl" style={{ fontFamily: '"Segoe UI", sans-serif' }}>COMPLETE SIGN UP</button>
         </div>
       </div>
     </div>  
