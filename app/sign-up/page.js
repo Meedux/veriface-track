@@ -1,8 +1,4 @@
 import React from 'react'
-<<<<<<< HEAD
-=======
-import { SlArrowRight } from "react-icons/sl";
->>>>>>> 54484c74bbaffa2c5acecf9f42f536f210a33078
 
 const page = () => {
   return (
@@ -80,29 +76,7 @@ const page = () => {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
     </div>  
-=======
-
-    </div> 
-    <div className="flex justify-center flex-col ">  {/*container of textbox*/}
-      <input className="w-[27rem] h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" type="text" placeholder="Username"style={{ fontFamily: '"Segoe UI", sans-serif' }} />
-      <input className="w-[27rem] h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" type="text" placeholder="Phone or Email"style={{ fontFamily: '"Segoe UI", sans-serif' }}/>
-      <input className="w-[27rem] h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" type="password" placeholder="Password (6-18)" style={{ fontFamily: '"Segoe UI", sans-serif' }}/>
-    </div>
-
-    <div className="bg-[#E8F5E9] h-[4.5rem] w-[27rem] rounded-[15] flex justify-start items-center mt-[2rem] pl-[1rem] ">
-      <div className="bg-[green] w-[3rem] h-[3rem] mr-[1rem]"></div>
-      <p className="text-[#473D3D] ">Facial recognition</p>
-      <span><SlArrowRight className="w-[2rem] h-[2rem]"/> </span>
-    </div>
-  </div>
-
-</div>
-
-
-</div>  
->>>>>>> 54484c74bbaffa2c5acecf9f42f536f210a33078
   )
 }
 
