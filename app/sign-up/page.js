@@ -1,5 +1,6 @@
 import React from 'react'
-
+import { SlArrowRight } from "react-icons/sl";
+import { LuScanFace } from "react-icons/lu";
 const page = () => {
   return (
     <div className="min-h-screen bg-[#E8F5E9] flex justify-between items-center">
@@ -69,11 +70,14 @@ const page = () => {
           </div>
 
           {/* Facial recognition section */}
-          <div className="bg-[#E8F5E9] h-[4.5rem] w-[27rem] rounded-[15] flex justify-start items-center mt-[2rem] pl-[1rem]">
-            <div className="bg-[green] w-[3rem] h-[3rem] mr-[1rem]">
-            </div>
-            <p className="text-[#473D3D]">Facial recognition</p>
+          <div className="bg-[#E8F5E9] h-[4.5rem] w-[27rem] rounded-[15] flex justify-start items-center mt-[1.5rem] pl-[1rem] mb-[1rem]">
+            <span>
+            <LuScanFace className="w-[2rem] h-[2rem]" style={{ color: '#0D8A3F' }} />
+            </span>
+            <p className="text-[#473D3D] mr-[12rem] ml-[1rem]">Facial recognition</p>
+            <span><SlArrowRight className="w-[1rem] h-[1rem]"/></span>
           </div>
+          <button  className="bg-[#0D8A3F] h-[3.7rem] w-[27rem] rounded-[10] flex justify-center items-center text-[white] text-[1.2rem]" style={{ fontFamily: '"Segoe UI", sans-serif' }}>COMPLETE SIGN UP</button>
         </div>
       </div>
     </div>  
