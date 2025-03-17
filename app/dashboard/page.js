@@ -15,7 +15,7 @@ const page = () => {
         <span className="text-base font-extrabold">VeriFace Track</span>
         <FaRegCircle className="ml-16 mt-3 text-7xl"></FaRegCircle >
         <h2 className="mt-4 text-2xl">Hi Jaye Mark!</h2>
-        <p className="text-sm">Have a nice day</p>
+        <p className="text-xs">Have a nice day</p>
       </div>
       
       {/* Navigation */}
@@ -44,7 +44,7 @@ const page = () => {
             </a>
           </li>
           
-          <li className="mt-80 mb-4">
+          <li className="mt-55 mb-4">
             <a href="#" className="flex gap-3 items-center p-4 pl-4 pr-4 rounded-lg hover:bg-green-100 text-gray-700">
               <FiSettings className="text-2xl"></FiSettings>
               <span className="text-base">Settings</span>
@@ -84,8 +84,9 @@ const page = () => {
         </div>
 
         {/* CALENDAR*/}
-        <div className="bg-green-100 p-5 rounded-lg col-span-3">
-          <h3 className="text-lg font-bold mb-150">Calendar</h3>
+        <div className="col-span-3">
+          <span className="text-sm-semibold m-3">Calendar</span>
+          <div className="bg-green-100 mt-3 rounded-lg h-150"> </div>
         </div>
       </div>
       
