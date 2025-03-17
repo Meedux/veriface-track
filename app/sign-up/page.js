@@ -1,4 +1,6 @@
 import React from 'react'
+import { SlArrowRight } from "react-icons/sl";
+
 const page = () => {
   return (
     <div className="min-h-screen bg-[#E8F5E9] flex justify-between items-center">
@@ -33,6 +35,7 @@ const page = () => {
     <div className="bg-[#E8F5E9] h-[4.5rem] w-[27rem] rounded-[15] flex justify-start items-center mt-[2rem] pl-[1rem] ">
       <div className="bg-[green] w-[3rem] h-[3rem] mr-[1rem]"></div>
       <p className="text-[#473D3D] ">Facial recognition</p>
+      <span><SlArrowRight className="w-[2rem] h-[2rem]"/> </span>
     </div>
   </div>
 
