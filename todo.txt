@@ -1,7 +1,7 @@
 Front End:
 
 Sidebar Authenticated
-When initially entered the website with the url '/' it will redirect it to '/login'
+When initially entered the website with the url '/' it will redirect it to '/login' /
 Calendar page
 Verification page
 
