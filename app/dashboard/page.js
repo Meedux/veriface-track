@@ -50,11 +50,11 @@ const Dashboard = () => {
       <div className="flex-1 p-8 overflow-auto">
         <header className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <FiMail className="text-2xl cursor-pointer hover:text-[#0D8A3F] transition-colors" />
             <FiBell className="text-2xl cursor-pointer hover:text-[#0D8A3F] transition-colors" />
             <CgProfile className="text-2xl cursor-pointer hover:text-[#0D8A3F] transition-colors" />
-          </div>
+          </div> */}
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border border-gray-200 p-5 rounded-lg shadow-sm">
