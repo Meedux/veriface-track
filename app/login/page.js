@@ -4,8 +4,20 @@ import React from 'react';
 import { LuScanFace } from "react-icons/lu";
 import { motion } from "framer-motion";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 export default function Home() {
+  const router = useRouter(); // Initialize router
+  
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Prevent default form submission
+    // Here you would normally validate login credentials
+    
+    // Redirect to dashboard
+    router.push('/dashboard');
+  };
+
   return (
     <main className="min-h-screen bg-[#E8F5E9] flex items-center justify-center">
       <div className="container flex flex-row justify-evenly items-center w-full max-w-7xl">
@@ -45,7 +57,7 @@ export default function Home() {
             </Link>
           </div>
 
-          <form className="w-[27rem]">
+          <form className="w-[27rem]" onSubmit={handleSubmit}>
             <input 
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" 
               type="text" 
@@ -83,13 +95,16 @@ export default function Home() {
               </motion.div>
             </Link>
             
-            <button 
+            <motion.button 
               type="submit"
               className="bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4" 
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
+              whileHover={{ scale: 1.02, backgroundColor: "#0A7A37" }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               LOGIN
-            </button>
+            </motion.button>
           </form>
         </section>
       </div>
