@@ -1,6 +1,8 @@
+"use client";
 import React from "react";
 import { SlArrowRight } from "react-icons/sl";
 import { LuScanFace } from "react-icons/lu";
+import { motion } from "framer-motion";
 import Link from "next/link";
 
 const page = () => {
@@ -69,16 +71,40 @@ const page = () => {
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
 
-            <div className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem]">
-              <LuScanFace
-                className="w-[2rem] h-[2rem]"
-                style={{ color: "#0D8A3F" }}
-              />
-              <p className="text-[#473D3D] mr-auto ml-[1rem]">
-                Facial recognition
-              </p>
-              <SlArrowRight className="w-[1rem] h-[1rem] mr-4" />
-            </div>
+            <Link href="/verification">
+              <motion.div 
+                className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem] cursor-pointer relative overflow-hidden group"
+                whileHover={{ 
+                  scale: 1.02,
+                  backgroundColor: "rgba(13, 138, 63, 0.08)" 
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <LuScanFace
+                  className="w-[2rem] h-[2rem] text-[#0D8A3F] group-hover:scale-110 transition-transform"
+                />
+                <p className="text-[#473D3D] mr-auto ml-[1rem] group-hover:translate-x-1 transition-transform">
+                  Facial recognition
+                </p>
+                
+                <motion.div 
+                  className="flex items-center justify-center mr-4"
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                >
+                  <SlArrowRight className="w-[1rem] h-[1rem] group-hover:scale-125 transition-all" />
+                </motion.div>
+
+                {/* Animation indicator */}
+                <motion.div 
+                  className="absolute bottom-0 left-0 h-1 bg-[#0D8A3F]"
+                  initial={{ width: "0%" }}
+                  whileHover={{ width: "100%" }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
+            </Link>
 
             <button
               type="submit"
