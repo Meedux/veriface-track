@@ -272,6 +272,10 @@ export default function FaceVerification() {
       // Clear session storage
       sessionStorage.removeItem('signupData');
       
+      // Save token and user info in localStorage
+      localStorage.setItem('token', signUpData.token);
+      localStorage.setItem('user', JSON.stringify(signUpData.user));
+
       setMessage('Account created! Redirecting to dashboard...');
       
       // Redirect to dashboard
