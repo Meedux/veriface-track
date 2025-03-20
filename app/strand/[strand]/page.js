@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Sidebar from "@/component/Sidebar";
 import AttendanceTable from "@/component/AttendanceTable";
 import { motion } from 'framer-motion';
+
+// Cache for storing strand data across renders and component instances
+const strandDataCache = {};
 
 const StrandPage = () => {
   const params = useParams();
@@ -16,32 +19,63 @@ const StrandPage = () => {
     total: 0
   });
   const [loading, setLoading] = useState(true);
+  
+  // Reference to track which strands we've already fetched
+  const fetchedStrands = useRef(new Set());
 
   useEffect(() => {
+    // Skip if no strand name is available
+    if (!strandName) return;
+    
+    // Function to handle setting stats while avoiding multiple renders
+    const setStats = (stats) => {
+      setStrandStats(stats);
+      setLoading(false);
+    };
+    
+    // If we already have cached data, use it without fetching
+    if (strandDataCache[strandName]) {
+      setStats(strandDataCache[strandName]);
+      return;
+    }
+    
+    // If we've already initiated a fetch for this strand, don't fetch again
+    if (fetchedStrands.current.has(strandName)) return;
+    
+    // Mark this strand as being fetched so we don't fetch it again
+    fetchedStrands.current.add(strandName);
+    
     // Fetch strand statistics
     const fetchStrandStats = async () => {
       try {
-        const response = await fetch(`/api/attendance/${strandName}`);
+        const response = await fetch(`/api/attendance/stats?strand=${strandName}`);
         if (response.ok) {
           const data = await response.json();
-          setStrandStats({
+          const statsData = {
             present: data.presentCount || 0,
             late: data.lateCount || 0,
             absent: data.absentCount || 0,
             total: data.totalStudents || 0
-          });
+          };
+          
+          // Store in cache for future use
+          strandDataCache[strandName] = statsData;
+          
+          // Update state (only once)
+          setStats(statsData);
+        } else {
+          // Handle error response
+          console.error(`Failed to fetch strand stats: ${response.status}`);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error fetching strand stats:", error);
-      } finally {
         setLoading(false);
       }
     };
 
-    if (strandName) {
-      fetchStrandStats();
-    }
-  }, [strandName]);
+    fetchStrandStats();
+  }, [strandName]); // Only re-run if strandName changes
 
   // Strand colors mapping
   const strandColors = {
@@ -106,17 +140,17 @@ const StrandPage = () => {
           {/* Strand-specific Attendance Table */}
           <div className="col-span-3 bg-white p-4 rounded-lg shadow-sm">
             <span className="text-sm font-medium block mb-3">{strandName} Attendance Tracker</span>
-            <StrandAttendanceTable strand={strandName} />
+            {!loading && <AttendanceTable filter={{ strand: strandName }} />}
+            {loading && (
+              <div className="flex justify-center items-center p-10">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0D8A3F]"></div>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
-};
-
-// Create a strand-specific attendance table
-const StrandAttendanceTable = ({ strand }) => {
-  return <AttendanceTable filter={{ strand }} />;
 };
 
 export default StrandPage;

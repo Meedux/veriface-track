@@ -1,14 +1,29 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IoIosArrowDown } from "react-icons/io";
 import { FiHome, FiCalendar, FiSettings } from "react-icons/fi";
 import { TbSchool } from "react-icons/tb";
 import { FaRegCircle } from "react-icons/fa6";
 import Link from 'next/link';
 
-const Sidebar = ({ username = "John Doe" }) => {
+const Sidebar = () => {
   const [isStrandsOpen, setIsStrandsOpen] = useState(false);
+  const [username, setUsername] = useState("Guest");
+  
+  // Get user data from localStorage on component mount
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        // Use name field if available, otherwise use username
+        setUsername(user.name || user.username || "Guest");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }, []);
 
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
@@ -21,6 +36,7 @@ const Sidebar = ({ username = "John Doe" }) => {
         <p className="text-xs text-gray-500">Have a nice day</p>
       </div>
       
+      {/* Rest of your sidebar component remains unchanged */}
       <nav className="flex-1 px-3 pt-5 overflow-y-auto">
         <ul className="space-y-1">
           <li>
