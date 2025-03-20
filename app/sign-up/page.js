@@ -1,11 +1,89 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { SlArrowRight } from "react-icons/sl";
 import { LuScanFace } from "react-icons/lu";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-const page = () => {
+const SignUpPage = () => {
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleFaceRegistration = (e) => {
+    e.preventDefault();
+    
+    // Basic form validation
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError('All fields are required');
+      return;
+    }
+    
+    if (password.length < 6 || password.length > 18) {
+      setError('Password must be between 6-18 characters');
+      return;
+    }
+    
+    // Store sign-up data in session storage
+    const signupData = {
+      username,
+      email,
+      password
+    };
+    
+    sessionStorage.setItem('signupData', JSON.stringify(signupData));
+    
+    // Redirect to face registration page
+    router.push('/verification?mode=register');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    try {
+      // Basic form validation
+      if (!username.trim() || !email.trim() || !password.trim()) {
+        throw new Error('All fields are required');
+      }
+      
+      if (password.length < 6 || password.length > 18) {
+        throw new Error('Password must be between 6-18 characters');
+      }
+      
+      // Register user without facial recognition
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          name: username,
+          email,
+          password
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Sign up failed');
+      }
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#E8F5E9] flex items-center justify-center">
       <div className="container flex flex-row justify-evenly items-center w-full max-w-7xl">
@@ -51,27 +129,39 @@ const page = () => {
             </div>
           </div>
 
-          <form className="w-[27rem]">
+          <form className="w-[27rem]" onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
+            
             <input
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
               type="text"
               placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
             <input
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
-              type="text"
-              placeholder="Phone or Email"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
             <input
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
               type="password"
               placeholder="Password (6-18)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
 
-            <Link href="/verification">
+            <div onClick={handleFaceRegistration}>
               <motion.div 
                 className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem] cursor-pointer relative overflow-hidden group"
                 whileHover={{ 
@@ -85,7 +175,7 @@ const page = () => {
                   className="w-[2rem] h-[2rem] text-[#0D8A3F] group-hover:scale-110 transition-transform"
                 />
                 <p className="text-[#473D3D] mr-auto ml-[1rem] group-hover:translate-x-1 transition-transform">
-                  Facial recognition
+                  Add facial recognition
                 </p>
                 
                 <motion.div 
@@ -104,15 +194,19 @@ const page = () => {
                   transition={{ duration: 0.3 }}
                 />
               </motion.div>
-            </Link>
+            </div>
 
-            <button
+            <motion.button
               type="submit"
-              className="bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4"
+              disabled={loading}
+              className={`bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 ${loading ? 'opacity-70' : ''}`}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
+              whileHover={{ scale: loading ? 1 : 1.02, backgroundColor: loading ? "#0D8A3F" : "#0A7A37" }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              COMPLETE SIGN UP
-            </button>
+              {loading ? 'SIGNING UP...' : 'COMPLETE SIGN UP'}
+            </motion.button>
           </form>
         </section>
       </div>
@@ -120,4 +214,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default SignUpPage;

@@ -12,9 +12,14 @@
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
     "@fullcalendar/react": "^6.1.15",
+    "@prisma/client": "^6.5.0",
+    "bcrypt": "^5.1.1",
     "face-api.js": "^0.22.2",
     "framer-motion": "^12.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
     "next": "15.2.1",
+    "next-auth": "^4.24.11",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0"
@@ -24,6 +29,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
+    "prisma": "^6.5.0",
     "tailwindcss": "^4"
   }
 }

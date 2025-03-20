@@ -8,7 +8,8 @@ Profile *
 
 
 Backend:
-facial Recognition
-Postgresql Database
-Data display from the Postgresql
-ensuring facial data stored to database
+facial Recognition /
+API routes setup *
+Postgresql Database *
+Data display from the Postgresql *
+ensuring facial data stored to database *

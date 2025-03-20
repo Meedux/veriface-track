@@ -1,21 +1,50 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { LuScanFace } from "react-icons/lu";
 import { motion } from "framer-motion";
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   
   // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault(); // Prevent default form submission
-    // Here you would normally validate login credentials
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
     
-    // Redirect to dashboard
-    router.push('/dashboard');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+      
+      // Save token and user info in localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -58,20 +87,30 @@ export default function Home() {
           </div>
 
           <form className="w-[27rem]" onSubmit={handleSubmit}>
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
+            
             <input 
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" 
-              type="text" 
-              placeholder="Phone or Email"
+              type="email" 
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
             <input 
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]" 
               type="password" 
               placeholder="Password (6-18)" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
             
-            <Link href="/verification">
+            <Link href="/verification?mode=login">
               <motion.div 
                 className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem] cursor-pointer relative overflow-hidden group"
                 whileHover={{ 
@@ -97,13 +136,14 @@ export default function Home() {
             
             <motion.button 
               type="submit"
-              className="bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4" 
+              disabled={loading}
+              className={`bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 ${loading ? 'opacity-70' : ''}`}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
-              whileHover={{ scale: 1.02, backgroundColor: "#0A7A37" }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: loading ? 1 : 1.02, backgroundColor: loading ? "#0D8A3F" : "#0A7A37" }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              LOGIN
+              {loading ? 'LOGGING IN...' : 'LOGIN'}
             </motion.button>
           </form>
         </section>

@@ -1,175 +1,422 @@
-'use client';
+"use client";
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as faceapi from 'face-api.js';
-import { LuScanFace } from "react-icons/lu";
-import { IoCheckmarkCircleOutline } from "react-icons/io5";
-import { IoCloseCircleOutline } from "react-icons/io5";
+import { motion } from 'framer-motion';
 
-const VerificationPage = () => {
-  const videoRef = useRef();
-  const canvasRef = useRef();
-  const [modelsLoaded, setModelsLoaded] = useState(false);
-  const [captureReady, setCaptureReady] = useState(false);
-  const [processingData, setProcessingData] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState('waiting'); // waiting, processing, success, failed
+export default function FaceVerification() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [captureCount, setCaptureCount] = useState(0);
+  const [faceDescriptors, setFaceDescriptors] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [mode, setMode] = useState('login'); // 'login' or 'register'
 
-  // Load face detection models
   useEffect(() => {
+    // Determine mode based on query param
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'register') {
+      setMode('register');
+      
+      // For registration, get user data from session storage
+      const storedUserData = sessionStorage.getItem('signupData');
+      if (storedUserData) {
+        setUserData(JSON.parse(storedUserData));
+      } else {
+        setError('No user data found. Please fill the sign-up form first.');
+      }
+    } else {
+      // Default to login mode
+      setMode('login');
+    }
+
     const loadModels = async () => {
       const MODEL_URL = '/models';
       
       try {
+        setMessage('Loading face recognition models...');
+        
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
         ]);
-        setModelsLoaded(true);
-        console.log('Face detection models loaded');
+        
+        setMessage('Starting camera...');
+        
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' }
+          });
+          
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        } else {
+          setError('Camera not available on your device');
+        }
+        
+        setLoading(false);
+        
+        if (mode === 'register') {
+          setMessage('Position your face in the frame and click "Capture Face"');
+        } else {
+          setMessage('Position your face in the frame and click "Login with Face"');
+        }
       } catch (error) {
-        console.error('Error loading models:', error);
+        console.error('Error initializing face recognition:', error);
+        setError('Failed to initialize face recognition');
+        setLoading(false);
       }
     };
     
     loadModels();
-  }, []);
-
-  // Setup webcam
-  useEffect(() => {
-    if (modelsLoaded) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            setCaptureReady(true);
-          }
-        })
-        .catch(err => console.error("Error accessing webcam:", err));
-    }
-  }, [modelsLoaded]);
-
-  // Face detection function
-  const detectFace = async () => {
-    if (!captureReady || !videoRef.current || !canvasRef.current) return;
     
-    setProcessingData(true);
-    setVerificationStatus('processing');
+    // Save a reference to videoRef.current for the cleanup function
+    const videoElement = videoRef.current;
     
-    // Get video dimensions
-    const { videoWidth, videoHeight } = videoRef.current;
-    canvasRef.current.width = videoWidth;
-    canvasRef.current.height = videoHeight;
-    
-    // Detect faces
-    const detections = await faceapi.detectAllFaces(
-      videoRef.current, 
-      new faceapi.TinyFaceDetectorOptions()
-    ).withFaceLandmarks().withFaceDescriptors();
-    
-    if (detections.length === 0) {
-      console.log("No face detected");
-      setVerificationStatus('failed');
-      setProcessingData(false);
-      return;
-    }
-    
-    if (detections.length > 1) {
-      console.log("Multiple faces detected");
-      setVerificationStatus('failed');
-      setProcessingData(false);
-      return;
-    }
-    
-    // Draw detections
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.clearRect(0, 0, videoWidth, videoHeight);
-    
-    // Get facial data (descriptor is the unique facial fingerprint)
-    const faceData = {
-      landmarks: detections[0].landmarks.positions,
-      descriptor: Array.from(detections[0].descriptor),
-      boundingBox: detections[0].detection.box
+    return () => {
+      // Clean up camera when component unmounts
+      if (videoElement && videoElement.srcObject) {
+        const tracks = videoElement.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+      }
     };
+  }, [searchParams, mode]);
+
+  const captureFace = async () => {
+    if (!videoRef.current) return;
     
-    console.log("Facial data captured:", faceData);
+    try {
+      setMessage('Capturing face...');
+      
+      // Detect face and get descriptor
+      const detections = await faceapi.detectSingleFace(videoRef.current)
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+      
+      if (!detections) {
+        setMessage('No face detected. Please position your face properly and try again.');
+        return;
+      }
+      
+      // Draw face mesh on canvas for visual feedback
+      if (canvasRef.current) {
+        const displaySize = { width: videoRef.current.width, height: videoRef.current.height };
+        faceapi.matchDimensions(canvasRef.current, displaySize);
+        
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+        const ctx = canvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
+      }
+      
+      if (mode === 'register') {
+        // Registration mode - collect multiple face angles
+        setFaceDescriptors(prev => [...prev, Array.from(detections.descriptor)]);
+        setCaptureCount(prev => prev + 1);
+        
+        if (captureCount >= 2) {
+          setMessage('Face captured successfully! Finalizing registration...');
+        } else {
+          setMessage(`Face captured (${captureCount + 1}/3). Please move slightly and capture again.`);
+        }
+      } else {
+        // Login mode - verify face immediately
+        loginWithFace(Array.from(detections.descriptor));
+      }
+    } catch (error) {
+      console.error('Face capture error:', error);
+      setMessage('Error capturing face');
+    }
+  };
+
+  const loginWithFace = async (faceDescriptor) => {
+    if (!faceDescriptor) return;
     
-    // Draw rectangle around face
-    faceapi.draw.drawDetections(canvasRef.current, detections);
-    faceapi.draw.drawFaceLandmarks(canvasRef.current, detections);
+    setProcessing(true);
+    setMessage('Verifying your face...');
     
-    setVerificationStatus('success');
-    setProcessingData(false);
+    try {
+      const response = await fetch('/api/auth/face-register/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ faceDescriptor })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Face verification failed');
+      }
+      
+      // Save authentication data
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      setMessage('Face verified! Redirecting to dashboard...');
+      setTimeout(() => router.push('/dashboard'), 1500);
+    } catch (error) {
+      console.error('Face verification error:', error);
+      setMessage(error.message || 'Face verification failed');
+      setProcessing(false);
+    }
+  };
+
+  const completeFaceRegistration = async () => {
+    if (faceDescriptors.length < 3) {
+      setMessage('Please capture your face 3 times from different angles');
+      return;
+    }
+
+    if (!userData) {
+      setError('No user data found. Please fill the sign-up form first.');
+      return;
+    }
     
-    // In a real app, you would send this data to your backend
+    setProcessing(true);
+    setMessage('Registering your face and creating account...');
+    
+    try {
+      // First, create the user account
+      const signUpResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: userData.username,
+          email: userData.email,
+          password: userData.password,
+          strand: userData.strand || ''
+        })
+      });
+      
+      const signUpData = await signUpResponse.json();
+      
+      if (!signUpResponse.ok) {
+        throw new Error(signUpData.message || 'Failed to create account');
+      }
+      
+      // Register face data with user account
+      const faceRegisterResponse = await fetch('/api/auth/face-register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          faceDescriptor: faceDescriptors
+        })
+      });
+      
+      const faceRegisterData = await faceRegisterResponse.json();
+      
+      if (!faceRegisterResponse.ok) {
+        throw new Error(faceRegisterData.message || 'Face registration failed');
+      }
+      
+      // Clear session storage
+      sessionStorage.removeItem('signupData');
+      
+      setMessage('Registration complete! Redirecting to dashboard...');
+      
+      // Redirect to dashboard after successful registration
+      setTimeout(() => router.push('/dashboard'), 1500);
+    } catch (error) {
+      console.error('Registration error:', error);
+      setMessage(error.message || 'Registration failed');
+      setProcessing(false);
+    }
+  };
+
+  const skipFaceRegistration = async () => {
+    if (!userData) {
+      setError('No user data found. Please fill the sign-up form first.');
+      return;
+    }
+    
+    setProcessing(true);
+    setMessage('Creating account without face recognition...');
+    
+    try {
+      // Create user account without face data
+      const signUpResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: userData.username,
+          email: userData.email,
+          password: userData.password,
+          strand: userData.strand || ''
+        })
+      });
+      
+      const signUpData = await signUpResponse.json();
+      
+      if (!signUpResponse.ok) {
+        throw new Error(signUpData.message || 'Failed to create account');
+      }
+      
+      // Clear session storage
+      sessionStorage.removeItem('signupData');
+      
+      setMessage('Account created! Redirecting to dashboard...');
+      
+      // Redirect to dashboard
+      setTimeout(() => router.push('/dashboard'), 1500);
+    } catch (error) {
+      console.error('Registration error:', error);
+      setMessage(error.message || 'Registration failed');
+      setProcessing(false);
+    }
   };
 
   return (
-    <main className="min-h-screen bg-[#E8F5E9] flex items-center justify-center">
-      <div className="container flex flex-col items-center w-full max-w-7xl">
-        <h1 
-          className="text-[2rem] text-black font-bold mb-6" 
-          style={{ fontFamily: '"Segoe UI", sans-serif' }}
-        >
-          Facial Verification
+    <main className="min-h-screen bg-[#E8F5E9] flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg">
+        <h1 className="text-2xl font-bold text-center text-[#0D8A3F] mb-2">
+          {mode === 'register' ? 'Face Registration' : 'Face Login'}
         </h1>
+        <p className="text-gray-600 text-center mb-6">
+          {mode === 'register' 
+            ? 'Enhance your account security with facial recognition' 
+            : 'Login using facial recognition'}
+        </p>
         
-        <div className="bg-white w-[35rem] rounded-[15px] flex flex-col items-center p-8">
-          <div className="relative w-full h-[25rem] bg-[#f0f0f0] rounded-[15px] mb-6 overflow-hidden">
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              muted
-              className="w-full h-full object-cover"
-            />
-            <canvas 
-              ref={canvasRef} 
-              className="absolute top-0 left-0 w-full h-full"
-            />
-            
-            {/* Status overlays */}
-            {verificationStatus === 'processing' && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#0D8A3F] border-solid"></div>
-              </div>
-            )}
-            
-            {verificationStatus === 'success' && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <IoCheckmarkCircleOutline className="text-[#0D8A3F] text-7xl" />
-              </div>
-            )}
-            
-            {verificationStatus === 'failed' && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <IoCloseCircleOutline className="text-red-500 text-7xl" />
-              </div>
-            )}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center">
+            {error}
           </div>
+        )}
+        
+        <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden mb-6">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            width={640}
+            height={480}
+          />
           
-          <div className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center pl-[1rem] mb-[1rem]">
-            <LuScanFace className="w-[2rem] h-[2rem]" style={{ color: '#0D8A3F' }} />
-            <p className="text-[#473D3D] mr-auto ml-[1rem]">
-              {captureReady ? 'Camera ready' : 'Setting up camera...'}
-            </p>
-            {captureReady && 
-              <div className="bg-[#4CAF50] w-[1.2rem] h-[1.2rem] rounded-full mr-4"></div>
-            }
-          </div>
+          <canvas
+            ref={canvasRef}
+            className="absolute top-0 left-0 w-full h-full z-10"
+            width={640}
+            height={480}
+          />
           
-          <button 
-            onClick={detectFace}
-            disabled={!captureReady || processingData}
-            className={`h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 
-              ${!captureReady || processingData ? 'bg-gray-400' : 'bg-[#0D8A3F]'}`}
-            style={{ fontFamily: '"Segoe UI", sans-serif' }}
-          >
-            {processingData ? 'PROCESSING...' : 'VERIFY FACE'}
-          </button>
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-20">
+              <div className="loader"></div>
+            </div>
+          )}
         </div>
+        
+        <div className="text-center mb-6">
+          <p className="text-gray-700">{message}</p>
+          
+          {mode === 'register' && captureCount > 0 && (
+            <div className="flex justify-center mt-2 space-x-2">
+              {[...Array(3)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`w-3 h-3 rounded-full ${i < captureCount ? 'bg-green-500' : 'bg-gray-300'}`}
+                ></div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {mode === 'register' ? (
+          // Registration mode UI
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <motion.button
+              onClick={captureFace}
+              disabled={loading || processing || captureCount >= 3}
+              className={`w-full py-4 rounded-lg text-white font-medium ${
+                loading || processing || captureCount >= 3 ? 'bg-gray-400' : 'bg-[#0D8A3F]'
+              }`}
+              whileHover={{ scale: loading || processing || captureCount >= 3 ? 1 : 1.02 }}
+              whileTap={{ scale: loading || processing || captureCount >= 3 ? 1 : 0.98 }}
+            >
+              {captureCount >= 3 ? 'Faces Captured' : 'Capture Face'}
+            </motion.button>
+            
+            <motion.button
+              onClick={completeFaceRegistration}
+              disabled={loading || processing || captureCount < 3}
+              className={`w-full py-4 rounded-lg text-white font-medium ${
+                loading || processing || captureCount < 3 ? 'bg-gray-400' : 'bg-[#0D8A3F]'
+              }`}
+              whileHover={{ scale: loading || processing || captureCount < 3 ? 1 : 1.02 }}
+              whileTap={{ scale: loading || processing || captureCount < 3 ? 1 : 0.98 }}
+            >
+              {processing ? 'Registering...' : 'Complete Registration'}
+            </motion.button>
+            
+            <button
+              onClick={skipFaceRegistration}
+              disabled={processing}
+              className="w-full mt-4 py-3 text-[#0D8A3F] hover:underline col-span-1 md:col-span-2"
+            >
+              Skip Face Registration
+            </button>
+          </div>
+        ) : (
+          // Login mode UI
+          <div className="flex flex-col">
+            <motion.button
+              onClick={captureFace}
+              disabled={loading || processing}
+              className={`w-full py-4 rounded-lg text-white font-medium ${
+                loading || processing ? 'bg-gray-400' : 'bg-[#0D8A3F]'
+              }`}
+              whileHover={{ scale: loading || processing ? 1 : 1.02 }}
+              whileTap={{ scale: loading || processing ? 1 : 0.98 }}
+            >
+              {processing ? 'Verifying...' : 'Login with Face'}
+            </motion.button>
+          </div>
+        )}
+        
+        <button
+          onClick={() => router.back()}
+          disabled={processing}
+          className="w-full mt-4 py-3 text-gray-500 text-sm hover:underline"
+        >
+          Go Back
+        </button>
       </div>
+      
+      <style jsx>{`
+        .loader {
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top: 4px solid #fff;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </main>
   );
-};
-
-export default VerificationPage;
+}
