@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 const AttendanceTable = ({ filter = {} }) => {
@@ -9,8 +9,13 @@ const AttendanceTable = ({ filter = {} }) => {
   const [attendanceData, setAttendanceData] = useState({});
   const [users, setUsers] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const hasFetchedRef = useRef(false);
   
   useEffect(() => {
+    // Prevent multiple fetches and infinite loops
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -51,20 +56,26 @@ const AttendanceTable = ({ filter = {} }) => {
         
         // Transform the data into the format expected by the component
         const formattedData = {};
-        data.forEach(record => {
-          const userId = record.userId;
-          const date = new Date(record.date);
-          const day = date.getDate();
-          
-          if (!formattedData[userId]) {
-            formattedData[userId] = {};
-          }
-          
-          formattedData[userId][day] = {
-            status: record.status,
-            time: record.time
-          };
-        });
+        
+        // Only process data if it's an array
+        if (Array.isArray(data)) {
+          data.forEach(record => {
+            const userId = record.userId;
+            const date = new Date(record.date);
+            const day = date.getDate();
+            
+            if (!formattedData[userId]) {
+              formattedData[userId] = {};
+            }
+            
+            formattedData[userId][day] = {
+              status: record.status,
+              time: record.time
+            };
+          });
+        } else {
+          console.log('Attendance data format unexpected:', data);
+        }
         
         setAttendanceData(formattedData);
       } catch (error) {
@@ -95,16 +106,16 @@ const AttendanceTable = ({ filter = {} }) => {
         setUsers(data);
       } catch (error) {
         console.error('Error fetching users:', error);
+      } finally {
+        // Set loaded after fetching is done
+        setIsLoaded(true);
       }
     };
     
     // Execute the fetch functions
     fetchAttendanceData();
     fetchUsers();
-    
-    // Set loaded after a small delay for animation purposes
-    setTimeout(() => setIsLoaded(true), 500);
-  }, [filter]);
+  }, [filter.userId, filter.strand]);
   
   // Get status class for attendance cell
   const getStatusClass = (status) => {

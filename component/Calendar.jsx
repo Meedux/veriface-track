@@ -15,7 +15,7 @@ const Calendar = ({ userId }) => {
       try {
         // Determine URL based on if userId is provided
         const url = userId 
-          ? `/api/attendance?userId=${userId}` 
+          ? `/api/attendance/user?userId=${userId}` 
           : '/api/attendance';
         
         const response = await fetch(url);
@@ -26,8 +26,25 @@ const Calendar = ({ userId }) => {
         
         const data = await response.json();
         
+        // Check if data is in the expected format
+        let attendanceRecords = [];
+        
+        if (Array.isArray(data)) {
+          // If API returns an array directly
+          attendanceRecords = data;
+        } else if (data.records && Array.isArray(data.records)) {
+          // If API returns an object with a records property
+          attendanceRecords = data.records;
+        } else if (data.data && Array.isArray(data.data)) {
+          // If API returns an object with a data property
+          attendanceRecords = data.data;
+        } else {
+          console.log('API response format:', data);
+          throw new Error('Unexpected data format from API');
+        }
+        
         // Convert attendance records to calendar events
-        const events = data.map(record => {
+        const events = attendanceRecords.map(record => {
           // Extract date from the record
           const date = new Date(record.date);
           const formattedDate = date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
@@ -77,6 +94,8 @@ const Calendar = ({ userId }) => {
         setAttendanceEvents(events);
       } catch (error) {
         console.error('Error fetching attendance data:', error);
+        // Set empty events array on error
+        setAttendanceEvents([]);
       } finally {
         setLoading(false);
       }
