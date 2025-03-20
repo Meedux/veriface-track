@@ -16,4 +16,5 @@ const nextConfig = {
   transpilePackages: ['face-api.js']
 };
 
-module.exports = nextConfig;
+// Change this line from CommonJS to ES Module syntax
+export default nextConfig;
