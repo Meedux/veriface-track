@@ -5,84 +5,85 @@ import { LuScanFace } from "react-icons/lu";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const SignUpPage = () => {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [strand, setStrand] = useState(''); // New state for strand
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [strand, setStrand] = useState(""); // New state for strand
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // List of available strands
-  const strands = ['STEM', 'ABM', 'HUMSS', 'HE', 'ICT', 'SMAW'];
+  const strands = ["STEM", "ABM", "HUMSS", "HE", "ICT", "SMAW"];
 
   const handleFaceRegistration = (e) => {
     e.preventDefault();
-    
+
     // Basic form validation
     if (!username.trim() || !email.trim() || !password.trim() || !strand) {
-      setError('All fields are required, including strand');
+      setError("All fields are required, including strand");
       return;
     }
-    
+
     if (password.length < 6 || password.length > 18) {
-      setError('Password must be between 6-18 characters');
+      setError("Password must be between 6-18 characters");
       return;
     }
-    
+
     // Store sign-up data in session storage
     const signupData = {
       username,
       email,
       password,
-      strand // Include strand in session storage
+      strand, // Include strand in session storage
     };
-    
-    sessionStorage.setItem('signupData', JSON.stringify(signupData));
-    
+
+    sessionStorage.setItem("signupData", JSON.stringify(signupData));
+
     // Redirect to face registration page
-    router.push('/verification?mode=register');
+    router.push("/verification?mode=register");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
-    
+
     try {
       // Basic form validation
       if (!username.trim() || !email.trim() || !password.trim() || !strand) {
-        throw new Error('All fields are required, including strand');
+        throw new Error("All fields are required, including strand");
       }
-      
+
       if (password.length < 6 || password.length > 18) {
-        throw new Error('Password must be between 6-18 characters');
+        throw new Error("Password must be between 6-18 characters");
       }
-      
+
       // Register user without facial recognition
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           name: username,
           email,
           password,
-          strand // Include strand in API call
+          strand, // Include strand in API call
         }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Sign up failed');
+        throw new Error(data.message || "Sign up failed");
       }
-      
+
       // Redirect to dashboard
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch (error) {
       setError(error.message);
     } finally {
@@ -109,8 +110,15 @@ const SignUpPage = () => {
         </section>
 
         <section className="bg-white w-[35rem] h-[50rem] rounded-[15px] flex flex-col items-center">
-          <div className="bg-[#E8F5E9] w-[9rem] h-[9rem] rounded-full mt-[1.5rem] mb-[3rem]"></div>
-
+          <div className="w-[12rem] h-[12rem] rounded-full mt-[1.5rem] mb-[3rem] overflow-hidden flex items-center justify-center bg-[#E8F5E9]">
+            <Image
+              src="/logo.jpg"
+              alt="VeriFace Track Logo"
+              width={192}
+              height={192}
+              className="object-cover"
+            />
+          </div>
           <div className="bg-[#E8F5E9] h-[5rem] w-[27rem] rounded-[15] flex justify-between items-center mb-[3rem]">
             <Link
               href={"/login"}
@@ -141,7 +149,7 @@ const SignUpPage = () => {
                 {error}
               </div>
             )}
-            
+
             <input
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
               type="text"
@@ -166,7 +174,7 @@ const SignUpPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
-            
+
             {/* Strand selection dropdown */}
             <div className="relative mb-[1.5rem]">
               <select
@@ -185,30 +193,39 @@ const SignUpPage = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                <svg
+                  className="w-4 h-4 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
                 </svg>
               </div>
             </div>
 
             <div onClick={handleFaceRegistration}>
-              <motion.div 
+              <motion.div
                 className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem] cursor-pointer relative overflow-hidden group"
-                whileHover={{ 
+                whileHover={{
                   scale: 1.02,
-                  backgroundColor: "rgba(13, 138, 63, 0.08)" 
+                  backgroundColor: "rgba(13, 138, 63, 0.08)",
                 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
-                <LuScanFace
-                  className="w-[2rem] h-[2rem] text-[#0D8A3F] group-hover:scale-110 transition-transform"
-                />
+                <LuScanFace className="w-[2rem] h-[2rem] text-[#0D8A3F] group-hover:scale-110 transition-transform" />
                 <p className="text-[#473D3D] mr-auto ml-[1rem] group-hover:translate-x-1 transition-transform">
                   Add facial recognition
                 </p>
-                
-                <motion.div 
+
+                <motion.div
                   className="flex items-center justify-center mr-4"
                   whileHover={{ x: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -217,7 +234,7 @@ const SignUpPage = () => {
                 </motion.div>
 
                 {/* Animation indicator */}
-                <motion.div 
+                <motion.div
                   className="absolute bottom-0 left-0 h-1 bg-[#0D8A3F]"
                   initial={{ width: "0%" }}
                   whileHover={{ width: "100%" }}
@@ -229,13 +246,18 @@ const SignUpPage = () => {
             <motion.button
               type="submit"
               disabled={loading}
-              className={`bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 ${loading ? 'opacity-70' : ''}`}
+              className={`bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 ${
+                loading ? "opacity-70" : ""
+              }`}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
-              whileHover={{ scale: loading ? 1 : 1.02, backgroundColor: loading ? "#0D8A3F" : "#0A7A37" }}
+              whileHover={{
+                scale: loading ? 1 : 1.02,
+                backgroundColor: loading ? "#0D8A3F" : "#0A7A37",
+              }}
               whileTap={{ scale: loading ? 1 : 0.98 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              {loading ? 'SIGNING UP...' : 'COMPLETE SIGN UP'}
+              {loading ? "SIGNING UP..." : "COMPLETE SIGN UP"}
             </motion.button>
           </form>
         </section>

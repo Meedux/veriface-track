@@ -7,6 +7,7 @@ import { TbSchool } from "react-icons/tb";
 import { FaRegCircle } from "react-icons/fa6";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const Sidebar = () => {
   const [isStrandsOpen, setIsStrandsOpen] = useState(false);
@@ -49,8 +50,14 @@ const Sidebar = () => {
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
       <div className="p-5 border-b border-gray-200 flex flex-col items-center">
         <h1 className="text-lg font-bold text-[#0D8A3F]">VeriFace Track</h1>
-        <div className="bg-[#E8F5E9] w-20 h-20 rounded-full mt-4 flex items-center justify-center">
-          <FaRegCircle className="text-5xl text-gray-400" />
+        <div className="w-20 h-20 mt-4 rounded-full overflow-hidden flex items-center justify-center bg-[#E8F5E9]">
+          <Image
+            src="/logo.jpg"
+            alt="VeriFace Track Logo"
+            width={80}
+            height={80}
+            className="object-cover rounded-full"
+          />
         </div>
         <h2 className="mt-3 text-lg font-medium">Hi {username}!</h2>
         <p className="text-xs text-gray-500">Have a nice day</p>
