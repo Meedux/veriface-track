@@ -208,7 +208,7 @@ export default function FaceVerification() {
       }
       
       // Register face data with user account
-      const faceRegisterResponse = await fetch('/api/auth/veriface', {
+      const faceRegisterResponse = await fetch('/api/auth/veriface/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -12,9 +12,9 @@ facial Recognition /
 API routes setup /
 Postgresql Database /
 ensuring facial data stored to database /
-Updated schema: **
+Updated schema: /
     attendance schema
-Logging in via Facial Recognition will only log the user's attendance **
+Logging in via Facial Recognition will only log the user's attendance /
 Data display from the Postgresql **
 
 update the sign up form to include the strands *
