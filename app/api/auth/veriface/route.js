@@ -71,7 +71,7 @@ function calculateSimilarity(descriptor1, descriptor2) {
 
 export async function POST(request) {
   try {
-    const { faceDescriptor } = await request.json();
+    const { faceDescriptor, email } = await request.json();
 
     if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
       return NextResponse.json(
@@ -80,26 +80,33 @@ export async function POST(request) {
       );
     }
 
-    // Find all users with face data
+    // Find all users with face data, optionally filtered by email
+    const whereClause = {
+      faceData: {
+        isNot: null,
+      }
+    };
+    
+    // If email is provided, use it to filter users
+    if (email) {
+      whereClause.email = email;
+    }
+
     const usersWithFaceData = await prisma.user.findMany({
       include: {
         faceData: true,
       },
-      where: {
-        faceData: {
-          isNot: null,
-        },
-      },
+      where: whereClause
     });
 
     if (!usersWithFaceData.length) {
       return NextResponse.json(
-        { success: false, message: "No registered faces found" },
+        { success: false, message: email ? "No face data found for this email" : "No registered faces found" },
         { status: 404 }
       );
     }
 
-    // Find matching user with highest similarity - MOVED UP before trying to use matchedUser
+    // Find matching user with highest similarity
     let matchedUser = null;
     let highestSimilarity = 0;
     const SIMILARITY_THRESHOLD = 0.6; // Adjust as needed

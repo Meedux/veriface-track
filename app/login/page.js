@@ -10,42 +10,30 @@ import Image from "next/image";
 export default function Home() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-
-      // Save token and user info in localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+    
+    // Validation
+    if (!email || !email.trim()) {
+      setError("Please enter your email address");
+      return;
     }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    
+    // Store email in session storage for verification page
+    sessionStorage.setItem("authEmail", email);
+    
+    // Navigate to face verification
+    router.push("/verification?mode=login");
   };
 
   return (
@@ -66,7 +54,7 @@ export default function Home() {
           </p>
         </section>
 
-        <section className="bg-white w-[35rem] h-[50rem] rounded-[15px] flex flex-col items-center">
+        <section className="bg-white w-[35rem] h-[48rem] rounded-[15px] flex flex-col items-center">
           <div className="w-[12rem] h-[12rem] rounded-full mt-[1.5rem] mb-[3rem] overflow-hidden flex items-center justify-center bg-[#E8F5E9]">
             <Image
               src="/logo.jpg"
@@ -76,6 +64,7 @@ export default function Home() {
               className="object-cover"
             />
           </div>
+          
           <div className="bg-[#E8F5E9] h-[5rem] w-[27rem] rounded-[15] flex items-center mb-[3rem]">
             <div className="bg-[#0D8A3F] rounded-[10] ml-[0.5rem] mr-[4rem] h-[4rem] w-[14rem] flex justify-center items-center shadow-lg">
               <p
@@ -115,57 +104,24 @@ export default function Home() {
               onChange={(e) => setEmail(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
-            <input
-              className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
-              type="password"
-              placeholder="Password (6-18)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ fontFamily: '"Segoe UI", sans-serif' }}
-            />
-
-            <Link href="/verification?mode=login">
-              <motion.div
-                className="bg-[#E8F5E9] h-[4.5rem] w-full rounded-[15] flex items-center mt-[1.5rem] pl-[1rem] mb-[1rem] cursor-pointer relative overflow-hidden group"
-                whileHover={{
-                  scale: 1.02,
-                  backgroundColor: "rgba(13, 138, 63, 0.08)",
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <LuScanFace className="w-[2rem] h-[2rem] text-[#0D8A3F] group-hover:scale-110 transition-transform" />
-                <p className="text-[#473D3D] mr-auto ml-[1rem] group-hover:translate-x-1 transition-transform">
-                  Facial recognition ready
-                </p>
-                <div className="bg-[#4CAF50] w-[1.2rem] h-[1.2rem] rounded-full mr-4 group-hover:scale-110 transition-transform"></div>
-
-                {/* Animation indicator */}
-                <motion.div
-                  className="absolute bottom-0 left-0 h-1 bg-[#0D8A3F]"
-                  initial={{ width: "0%" }}
-                  whileHover={{ width: "100%" }}
-                  transition={{ duration: 0.3 }}
-                />
-              </motion.div>
-            </Link>
 
             <motion.button
               type="submit"
               disabled={loading}
-              className={`bg-[#0D8A3F] h-[3.7rem] w-full rounded-[10] flex justify-center items-center text-white text-[1.2rem] shadow-xl mt-4 ${
-                loading ? "opacity-70" : ""
-              }`}
-              style={{ fontFamily: '"Segoe UI", sans-serif' }}
-              whileHover={{
-                scale: loading ? 1 : 1.02,
-                backgroundColor: loading ? "#0D8A3F" : "#0A7A37",
-              }}
-              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full h-[4.5rem] bg-[#0D8A3F] rounded-[10] text-white flex items-center justify-center gap-3 shadow-lg"
+              whileHover={{ scale: 1.02, backgroundColor: "#0A7A37" }}
+              whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              {loading ? "LOGGING IN..." : "LOGIN"}
+              <LuScanFace className="w-[1.5rem] h-[1.5rem]" />
+              <span className="text-[1.2rem]" style={{ fontFamily: '"Segoe UI", sans-serif', fontWeight: "500" }}>
+                VERIFY WITH FACE
+              </span>
             </motion.button>
+            
+            <p className="text-center text-gray-500 mt-4 text-sm">
+              Your face is your password. No traditional password needed.
+            </p>
           </form>
         </section>
       </div>

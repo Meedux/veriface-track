@@ -18,6 +18,7 @@ export default function FaceVerification() {
   const [faceDescriptors, setFaceDescriptors] = useState([]);
   const [userData, setUserData] = useState(null);
   const [mode, setMode] = useState('login'); // 'login' or 'register'
+  const [email, setEmail] = useState('');
 
   useEffect(() => {
     // Determine mode based on query param
@@ -35,6 +36,14 @@ export default function FaceVerification() {
     } else {
       // Default to login mode
       setMode('login');
+      
+      // Get email from session storage for login
+      const storedEmail = sessionStorage.getItem('authEmail');
+      if (storedEmail) {
+        setEmail(storedEmail);
+      } else {
+        setError('Email not provided. Please enter your email on the login page.');
+      }
     }
 
     const loadModels = async () => {
@@ -68,7 +77,7 @@ export default function FaceVerification() {
         if (mode === 'register') {
           setMessage('Position your face in the frame and click "Capture Face"');
         } else {
-          setMessage('Position your face in the frame and click "Login with Face"');
+          setMessage('Position your face in the frame to authenticate');
         }
       } catch (error) {
         console.error('Error initializing face recognition:', error);
@@ -79,11 +88,9 @@ export default function FaceVerification() {
     
     loadModels();
     
-    // Save a reference to videoRef.current for the cleanup function
+    // Cleanup
     const videoElement = videoRef.current;
-    
     return () => {
-      // Clean up camera when component unmounts
       if (videoElement && videoElement.srcObject) {
         const tracks = videoElement.srcObject.getTracks();
         tracks.forEach(track => track.stop());
@@ -150,7 +157,10 @@ export default function FaceVerification() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ faceDescriptor })
+        body: JSON.stringify({ 
+          faceDescriptor,
+          email: email // Pass email to help with verification
+        })
       });
       
       const data = await response.json();
@@ -162,6 +172,9 @@ export default function FaceVerification() {
       // Save authentication data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Clear session storage
+      sessionStorage.removeItem('authEmail');
       
       setMessage('Face verified! Redirecting to dashboard...');
       setTimeout(() => router.push('/dashboard'), 1500);
@@ -239,64 +252,16 @@ export default function FaceVerification() {
     }
   };
 
-  const skipFaceRegistration = async () => {
-    if (!userData) {
-      setError('No user data found. Please fill the sign-up form first.');
-      return;
-    }
-    
-    setProcessing(true);
-    setMessage('Creating account without face recognition...');
-    
-    try {
-      // Create user account without face data
-      const signUpResponse = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: userData.username,
-          email: userData.email,
-          password: userData.password,
-          strand: userData.strand || ''
-        })
-      });
-      
-      const signUpData = await signUpResponse.json();
-      
-      if (!signUpResponse.ok) {
-        throw new Error(signUpData.message || 'Failed to create account');
-      }
-      
-      // Clear session storage
-      sessionStorage.removeItem('signupData');
-      
-      // Save token and user info in localStorage
-      localStorage.setItem('token', signUpData.token);
-      localStorage.setItem('user', JSON.stringify(signUpData.user));
-
-      setMessage('Account created! Redirecting to dashboard...');
-      
-      // Redirect to dashboard
-      setTimeout(() => router.push('/dashboard'), 1500);
-    } catch (error) {
-      console.error('Registration error:', error);
-      setMessage(error.message || 'Registration failed');
-      setProcessing(false);
-    }
-  };
-
   return (
     <main className="min-h-screen bg-[#E8F5E9] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-lg">
         <h1 className="text-2xl font-bold text-center text-[#0D8A3F] mb-2">
-          {mode === 'register' ? 'Face Registration' : 'Face Login'}
+          {mode === 'register' ? 'Face Registration' : 'Face Authentication'}
         </h1>
         <p className="text-gray-600 text-center mb-6">
           {mode === 'register' 
-            ? 'Enhance your account security with facial recognition' 
-            : 'Login using facial recognition'}
+            ? 'Create your facial identity for secure access' 
+            : 'Verify your identity with facial recognition'}
         </p>
         
         {error && (
@@ -371,14 +336,6 @@ export default function FaceVerification() {
             >
               {processing ? 'Registering...' : 'Complete Registration'}
             </motion.button>
-            
-            <button
-              onClick={skipFaceRegistration}
-              disabled={processing}
-              className="w-full mt-4 py-3 text-[#0D8A3F] hover:underline col-span-1 md:col-span-2"
-            >
-              Skip Face Registration
-            </button>
           </div>
         ) : (
           // Login mode UI
@@ -392,7 +349,7 @@ export default function FaceVerification() {
               whileHover={{ scale: loading || processing ? 1 : 1.02 }}
               whileTap={{ scale: loading || processing ? 1 : 0.98 }}
             >
-              {processing ? 'Verifying...' : 'Login with Face'}
+              {processing ? 'Verifying...' : 'Authenticate with Face'}
             </motion.button>
           </div>
         )}
