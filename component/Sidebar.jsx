@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { IoIosArrowDown } from "react-icons/io";
-import { FiHome, FiCalendar, FiSettings } from "react-icons/fi";
+import { FiHome, FiCalendar, FiSettings, FiLogOut } from "react-icons/fi";
 import { TbSchool } from "react-icons/tb";
 import { FaRegCircle } from "react-icons/fa6";
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 const Sidebar = () => {
   const [isStrandsOpen, setIsStrandsOpen] = useState(false);
   const [username, setUsername] = useState("Guest");
+  const router = useRouter();
   
   // Get user data from localStorage on component mount
   useEffect(() => {
@@ -25,6 +27,24 @@ const Sidebar = () => {
     }
   }, []);
 
+  // Handle logout function
+  const handleLogout = () => {
+    try {
+      // Clear authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('signupData');
+      
+      // Show logout message
+      alert('You have been logged out successfully');
+      
+      // Redirect to login page
+      router.push('/login');
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   return (
     <div className="h-screen w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
       <div className="p-5 border-b border-gray-200 flex flex-col items-center">
@@ -36,7 +56,7 @@ const Sidebar = () => {
         <p className="text-xs text-gray-500">Have a nice day</p>
       </div>
       
-      {/* Rest of your sidebar component remains unchanged */}
+      {/* Main navigation */}
       <nav className="flex-1 px-3 pt-5 overflow-y-auto">
         <ul className="space-y-1">
           <li>
@@ -110,15 +130,23 @@ const Sidebar = () => {
           </li>
         </ul>
 
-        <ul className="absolute bottom-5 left-0 right-0 px-3">
-          <li>
-            <Link href="/profile" 
-              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#E8F5E9] text-gray-700 transition-colors">
-              <FiSettings className="text-xl text-[#0D8A3F]" />
-              <span className="font-medium">Profile</span>
-            </Link>
-          </li>
-        </ul>
+        {/* Bottom navigation - fixed position at the bottom */}
+        <div className="absolute bottom-5 left-0 right-0 px-3 space-y-1">
+          <Link href="/profile" 
+            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[#E8F5E9] text-gray-700 transition-colors">
+            <FiSettings className="text-xl text-[#0D8A3F]" />
+            <span className="font-medium">Profile</span>
+          </Link>
+          
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 hover:text-red-600 transition-colors"
+          >
+            <FiLogOut className="text-xl text-red-500" />
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
       </nav>
     </div>
   );
