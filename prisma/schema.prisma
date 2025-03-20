@@ -8,16 +8,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  strand    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String       @id @default(cuid())
+  email      String       @unique
+  name       String
+  password   String
+  strand     String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
   
   // Face recognition data
-  faceData  FaceData?
+  faceData   FaceData?
+  
+  // Attendance records
+  attendance Attendance[]
 }
 
 model FaceData {
@@ -29,4 +32,20 @@ model FaceData {
   // Relation to User
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String   @unique
+}
+
+model Attendance {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now()) // Stores full date including year/month/day
+  time      String   // Formatted time like "8:30 AM" for display purposes
+  status    String   // "present", "late", "absent"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relation to User
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  
+  @@index([date]) // Add index for date queries
+  @@index([userId, date]) // Add compound index for user + date queries
 }

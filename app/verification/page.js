@@ -145,7 +145,7 @@ export default function FaceVerification() {
     setMessage('Verifying your face...');
     
     try {
-      const response = await fetch('/api/auth/face-register/verify', {
+      const response = await fetch('/api/auth/veriface', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -208,7 +208,7 @@ export default function FaceVerification() {
       }
       
       // Register face data with user account
-      const faceRegisterResponse = await fetch('/api/auth/face-register', {
+      const faceRegisterResponse = await fetch('/api/auth/veriface', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -23,69 +23,59 @@ const AttendanceTable = () => {
     const daysArray = Array.from({ length: totalDays }, (_, i) => i + 1);
     setDaysInMonth(daysArray);
     
-    // Mock users data - Adding more users for vertical scrolling
-    const mockUsers = [
-      { id: 1, name: "John Doe", strand: "STEM" },
-      { id: 2, name: "Jane Smith", strand: "ABM" },
-      { id: 3, name: "Alex Johnson", strand: "HUMSS" },
-      { id: 4, name: "Maria Garcia", strand: "ICT" },
-      { id: 5, name: "Robert Chen", strand: "STEM" },
-      { id: 6, name: "Lisa Taylor", strand: "HE" },
-      { id: 7, name: "Michael Brown", strand: "STEM" },
-      { id: 8, name: "Sarah Wilson", strand: "ABM" },
-      { id: 9, name: "Kevin Lee", strand: "ICT" },
-      { id: 10, name: "Emily Wong", strand: "HUMSS" },
-      { id: 11, name: "David Martinez", strand: "SMAW" },
-      { id: 12, name: "Jessica Clark", strand: "HE" }
-    ];
-    
-    // Generate mock attendance data for all users with times
-    const mockAttendanceData = {};
-    
-    mockUsers.forEach(user => {
-      mockAttendanceData[user.id] = {};
-      
-      daysArray.forEach(day => {
-        // Don't add future dates
-        if (day <= now.getDate()) {
-          // Random attendance status for past days
-          const rand = Math.random();
-          
-          if (rand < 0.7) {
-            // Present - generate time between 7:00-8:59 AM
-            const hour = Math.floor(Math.random() * 2) + 7; // 7-8
-            const minute = Math.floor(Math.random() * 60);
-            mockAttendanceData[user.id][day] = {
-              status: 'present',
-              time: `${hour}:${minute.toString().padStart(2, '0')} AM`
-            };
-          } 
-          else if (rand < 0.9) {
-            // Absent
-            mockAttendanceData[user.id][day] = {
-              status: 'absent'
-            };
-          }
-          else {
-            // Late - generate time between 9:00-11:00 AM
-            const hour = Math.floor(Math.random() * 3) + 9; // 9-11
-            const minute = Math.floor(Math.random() * 60);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour > 12 ? hour - 12 : hour;
-            mockAttendanceData[user.id][day] = {
-              status: 'late',
-              time: `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`
-            };
-          }
+    // Fetch actual attendance data
+    const fetchAttendanceData = async () => {
+      try {
+        const response = await fetch('/api/attendance');
+        if (!response.ok) {
+          throw new Error('Failed to fetch attendance data');
         }
-      });
-    });
+        
+        const data = await response.json();
+        
+        // Transform the data into the format expected by the component
+        const formattedData = {};
+        data.forEach(record => {
+          const userId = record.userId;
+          const date = new Date(record.date);
+          const day = date.getDate();
+          
+          if (!formattedData[userId]) {
+            formattedData[userId] = {};
+          }
+          
+          formattedData[userId][day] = {
+            status: record.status,
+            time: record.time
+          };
+        });
+        
+        setAttendanceData(formattedData);
+      } catch (error) {
+        console.error('Error fetching attendance data:', error);
+      }
+    };
     
-    setUsers(mockUsers);
-    setAttendanceData(mockAttendanceData);
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    // Execute the fetch functions
+    fetchAttendanceData();
+    fetchUsers();
     
     // Set loaded after a small delay for animation purposes
-    setTimeout(() => setIsLoaded(true), 300);
+    setTimeout(() => setIsLoaded(true), 500);
   }, []);
   
   // Get status class for attendance cell
