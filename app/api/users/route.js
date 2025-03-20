@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
-/**
- * GET endpoint to fetch all users
- * Returns user data needed for the attendance table
- */
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const strand = searchParams.get('strand');
+    
+    // Build the where clause
+    const whereClause = {};
+    
+    if (strand) {
+      whereClause.strand = {
+        equals: strand,
+        mode: 'insensitive' // Case-insensitive search
+      };
+    }
+    
     // Fetch all users, excluding sensitive data
     const users = await prisma.user.findMany({
+      where: whereClause,
       select: {
         id: true,
         name: true,

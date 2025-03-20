@@ -17,6 +17,9 @@ Updated schema: /
 Logging in via Facial Recognition will only log the user's attendance /
 Data display from the Postgresql **
 
-update the sign up form to include the strands *
+update the sign up form to include the strands /
 add the strand page: *
     basically the attendance tracker component from profile page but will only include the users in its respective strand
+
+Calendar Component Refunctional Update *
+Some numerical stuff update within pages *

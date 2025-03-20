@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const AttendanceTable = () => {
+const AttendanceTable = ({ filter = {} }) => {
   const [currentMonth, setCurrentMonth] = useState('');
   const [daysInMonth, setDaysInMonth] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
@@ -26,7 +26,23 @@ const AttendanceTable = () => {
     // Fetch actual attendance data
     const fetchAttendanceData = async () => {
       try {
-        const response = await fetch('/api/attendance');
+        // Add query params based on filter
+        let url = '/api/attendance';
+        const queryParams = new URLSearchParams();
+        
+        if (filter?.userId) {
+          queryParams.append('userId', filter.userId);
+        }
+        
+        if (filter?.strand) {
+          queryParams.append('strand', filter.strand);
+        }
+        
+        if (queryParams.toString()) {
+          url += `?${queryParams.toString()}`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch attendance data');
         }
@@ -58,7 +74,19 @@ const AttendanceTable = () => {
     
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/users');
+        // Add query params based on filter
+        let url = '/api/users';
+        const queryParams = new URLSearchParams();
+        
+        if (filter?.strand) {
+          queryParams.append('strand', filter.strand);
+        }
+        
+        if (queryParams.toString()) {
+          url += `?${queryParams.toString()}`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch users');
         }
@@ -76,7 +104,7 @@ const AttendanceTable = () => {
     
     // Set loaded after a small delay for animation purposes
     setTimeout(() => setIsLoaded(true), 500);
-  }, []);
+  }, [filter]);
   
   // Get status class for attendance cell
   const getStatusClass = (status) => {

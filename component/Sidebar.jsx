@@ -60,32 +60,32 @@ const Sidebar = ({ username = "John Doe" }) => {
             >
               <ul className="mt-1 ml-7 border-l border-gray-200 pl-4 space-y-1">
                 <li>
-                  <Link href="/dashboard/strands/stem" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/stem" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     STEM
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/strands/abm" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/abm" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     ABM
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/strands/humss" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/humss" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     HUMSS
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/strands/he" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/he" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     HE
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/strands/ict" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/ict" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     ICT
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard/strands/smaw" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
+                  <Link href="/strand/smaw" className="block py-2 px-3 text-sm text-gray-600 hover:text-[#0D8A3F] transition-colors">
                     SMAW
                   </Link>
                 </li>

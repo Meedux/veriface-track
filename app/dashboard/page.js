@@ -57,7 +57,7 @@ const Dashboard = () => {
           </div> */}
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 border border-gray-200 p-5 rounded-lg shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 border border-gray-200 p-5 rounded-lg shadow-sm">
           <div className="bg-green-100 p-6 rounded-lg">
             <h3 className="text-sm font-medium mb-2">Today</h3>
             <p className="text-3xl font-light">{currentDate}</p>
@@ -66,11 +66,6 @@ const Dashboard = () => {
           <div className="bg-green-100 p-6 rounded-lg">
             <h3 className="text-sm font-medium mb-2">Time</h3>
             <p className="text-3xl font-light">{currentTime}</p>
-          </div>
-
-          <div className="bg-green-100 p-6 rounded-lg">
-            <h3 className="text-sm font-medium mb-2">Attendance Preview</h3>
-            <p className="text-3xl font-light">--</p>
           </div>
 
           {/* CALENDAR */}

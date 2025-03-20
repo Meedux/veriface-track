@@ -11,15 +11,19 @@ const SignUpPage = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [strand, setStrand] = useState(''); // New state for strand
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // List of available strands
+  const strands = ['STEM', 'ABM', 'HUMSS', 'HE', 'ICT', 'SMAW'];
 
   const handleFaceRegistration = (e) => {
     e.preventDefault();
     
     // Basic form validation
-    if (!username.trim() || !email.trim() || !password.trim()) {
-      setError('All fields are required');
+    if (!username.trim() || !email.trim() || !password.trim() || !strand) {
+      setError('All fields are required, including strand');
       return;
     }
     
@@ -32,7 +36,8 @@ const SignUpPage = () => {
     const signupData = {
       username,
       email,
-      password
+      password,
+      strand // Include strand in session storage
     };
     
     sessionStorage.setItem('signupData', JSON.stringify(signupData));
@@ -48,8 +53,8 @@ const SignUpPage = () => {
     
     try {
       // Basic form validation
-      if (!username.trim() || !email.trim() || !password.trim()) {
-        throw new Error('All fields are required');
+      if (!username.trim() || !email.trim() || !password.trim() || !strand) {
+        throw new Error('All fields are required, including strand');
       }
       
       if (password.length < 6 || password.length > 18) {
@@ -65,7 +70,8 @@ const SignUpPage = () => {
         body: JSON.stringify({ 
           name: username,
           email,
-          password
+          password,
+          strand // Include strand in API call
         }),
       });
       
@@ -160,6 +166,30 @@ const SignUpPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
+            
+            {/* Strand selection dropdown */}
+            <div className="relative mb-[1.5rem]">
+              <select
+                className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] pl-[1rem] pr-10 appearance-none bg-white cursor-pointer"
+                value={strand}
+                onChange={(e) => setStrand(e.target.value)}
+                style={{ fontFamily: '"Segoe UI", sans-serif' }}
+              >
+                <option value="" disabled>
+                  Select your strand
+                </option>
+                {strands.map((strandOption) => (
+                  <option key={strandOption} value={strandOption}>
+                    {strandOption}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+            </div>
 
             <div onClick={handleFaceRegistration}>
               <motion.div 
