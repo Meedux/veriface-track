@@ -11,7 +11,7 @@ const SignUpPage = () => {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // const [password, setPassword] = useState("");
   const [strand, setStrand] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,15 +24,15 @@ const SignUpPage = () => {
     setError("");
 
     // Basic form validation
-    if (!username.trim() || !email.trim() || !password.trim() || !strand) {
+    if (!username.trim() || !email.trim() || !strand) {
       setError("All fields are required, including strand");
       return;
     }
 
-    if (password.length < 6 || password.length > 18) {
-      setError("Password must be between 6-18 characters");
-      return;
-    }
+    // if (password.length < 6 || password.length > 18) {
+    //   setError("Password must be between 6-18 characters");
+    //   return;
+    // }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -40,6 +40,8 @@ const SignUpPage = () => {
       setError("Please enter a valid email address");
       return;
     }
+
+    const password = ""
 
     // Store sign-up data in session storage
     const signupData = {
@@ -131,14 +133,14 @@ const SignUpPage = () => {
               onChange={(e) => setEmail(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
             />
-            <input
+            {/* <input
               className="w-full h-[3rem] border-[1px] border-[#d8d8d8] rounded-[10] mb-[1.5rem] pl-[1rem]"
               type="password"
               placeholder="Password (6-18)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{ fontFamily: '"Segoe UI", sans-serif' }}
-            />
+            /> */}
 
             {/* Strand selection dropdown */}
             <div className="relative mb-[1.5rem]">
