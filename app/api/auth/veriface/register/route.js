@@ -76,26 +76,26 @@ export async function POST(request) {
     });
 
     // Check for face similarity with existing users
-    for (const existingUser of allUsers) {
-      if (!existingUser.faceData || !existingUser.faceData.descriptors) continue;
+    // for (const existingUser of allUsers) {
+    //   if (!existingUser.faceData || !existingUser.faceData.descriptors) continue;
 
-      const similarity = compareFaceDescriptors(
-        // For simplicity, check first descriptor of the new face
-        faceDescriptors[0],
-        existingUser.faceData.descriptors
-      );
+    //   const similarity = compareFaceDescriptors(
+    //     // For simplicity, check first descriptor of the new face
+    //     faceDescriptors[0],
+    //     existingUser.faceData.descriptors
+    //   );
 
-      // If similarity is too high, this face might be already registered
-      if (similarity > 0.7) {
-        return NextResponse.json(
-          { 
-            success: false, 
-            message: "This face appears similar to an existing user. Please contact support if this is an error."
-          },
-          { status: 409 }
-        );
-      }
-    }
+    //   // If similarity is too high, this face might be already registered
+    //   if (similarity > 0.7) {
+    //     return NextResponse.json(
+    //       { 
+    //         success: false, 
+    //         message: "This face appears similar to an existing user. Please contact support if this is an error."
+    //       },
+    //       { status: 409 }
+    //     );
+    //   }
+    // }
 
     // Validate all face descriptors
     for (const desc of faceDescriptors) {
