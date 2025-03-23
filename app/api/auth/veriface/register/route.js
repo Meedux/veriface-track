@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import bcrypt from "bcrypt";
 
 // Import the similarity functions
 function calculateEuclideanSimilarity(descriptor1, descriptor2) {
@@ -37,28 +38,31 @@ function compareFaceDescriptors(queryDescriptor, storedDescriptors) {
 
 export async function POST(request) {
   try {
-    // Get user data and face descriptor
-    const { email, faceDescriptor } = await request.json();
-
-    if (!email || !faceDescriptor || !Array.isArray(faceDescriptor)) {
+    // Update to match the request structure from the frontend
+    const { userData, faceData } = await request.json();
+    
+    if (!userData || !userData.email || !faceData || !faceData.faceDescriptors) {
       return NextResponse.json(
         { success: false, message: "Invalid request data" },
         { status: 400 }
       );
     }
-
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email },
+    
+    const { name, email, password, strand } = userData;
+    const faceDescriptors = faceData.faceDescriptors;
+    
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
     });
-
-    if (!user) {
+    
+    if (existingUser) {
       return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 }
+        { success: false, message: "Email already registered" },
+        { status: 409 }
       );
     }
-
+    
     // SECURITY IMPROVEMENT: Check if this face is already registered to another user
     const allUsers = await prisma.user.findMany({
       include: {
@@ -67,10 +71,7 @@ export async function POST(request) {
       where: {
         faceData: {
           isNot: null,
-        },
-        NOT: {
-          id: user.id, // Exclude the current user
-        },
+        }
       },
     });
 
@@ -80,7 +81,7 @@ export async function POST(request) {
 
       const similarity = compareFaceDescriptors(
         // For simplicity, check first descriptor of the new face
-        Array.isArray(faceDescriptor[0]) ? faceDescriptor[0] : faceDescriptor,
+        faceDescriptors[0],
         existingUser.faceData.descriptors
       );
 
@@ -96,21 +97,9 @@ export async function POST(request) {
       }
     }
 
-    // IMPROVEMENT: Validate that the face descriptors actually represent a face
-    // by checking for reasonable variance in the descriptors
-    if (Array.isArray(faceDescriptor[0])) {
-      // Multiple descriptors
-      for (const desc of faceDescriptor) {
-        if (!isValidFaceDescriptor(desc)) {
-          return NextResponse.json(
-            { success: false, message: "Invalid face data detected. Please try again with better lighting." },
-            { status: 400 }
-          );
-        }
-      }
-    } else {
-      // Single descriptor
-      if (!isValidFaceDescriptor(faceDescriptor)) {
+    // Validate all face descriptors
+    for (const desc of faceDescriptors) {
+      if (!isValidFaceDescriptor(desc)) {
         return NextResponse.json(
           { success: false, message: "Invalid face data detected. Please try again with better lighting." },
           { status: 400 }
@@ -119,15 +108,14 @@ export async function POST(request) {
     }
 
     // IMPROVEMENT: Check that the multiple face captures are sufficiently different
-    // to ensure good coverage of facial angles
-    if (Array.isArray(faceDescriptor[0]) && faceDescriptor.length > 1) {
+    if (faceDescriptors.length > 1) {
       let tooSimilar = false;
       
-      for (let i = 0; i < faceDescriptor.length; i++) {
-        for (let j = i + 1; j < faceDescriptor.length; j++) {
+      for (let i = 0; i < faceDescriptors.length; i++) {
+        for (let j = i + 1; j < faceDescriptors.length; j++) {
           const similarity = calculateEuclideanSimilarity(
-            faceDescriptor[i],
-            faceDescriptor[j]
+            faceDescriptors[i],
+            faceDescriptors[j]
           );
           
           // If any two captures are too similar (>0.95), ask for more variation
@@ -147,9 +135,35 @@ export async function POST(request) {
       }
     }
 
+    // Create a new user with hashed password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    
+    // Create user with transaction to ensure both user and face data are created
+    const user = await prisma.$transaction(async (prisma) => {
+      // Create user
+      const newUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          strand: strand || null
+        }
+      });
+      
+      // Create face data
+      await prisma.faceData.create({
+        data: {
+          descriptors: faceDescriptors,
+          userId: newUser.id
+        }
+      });
+      
+      return newUser;
+    });
+
     // Create date object explicitly for Manila time (GMT+8)
     const now = new Date();
-    // Convert to Manila time
     const manilaTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
     const hour = manilaTime.getUTCHours();
     const minute = manilaTime.getUTCMinutes();
@@ -184,20 +198,17 @@ export async function POST(request) {
       `Initial attendance logged for ${user.name}: ${status} at ${formattedTime} Manila time`
     );
 
-    // Update or create face data for the user
-    await prisma.faceData.upsert({
-      where: { userId: user.id },
-      update: { descriptors: faceDescriptor },
-      create: {
-        descriptors: faceDescriptor,
-        userId: user.id,
-      },
-    });
+    // Don't return the password
+    const { password: _, ...userWithoutPassword } = user;
 
     // Set user session cookie
     const response = NextResponse.json(
-      { success: true, message: "Face registered successfully" },
-      { status: 200 }
+      { 
+        success: true, 
+        message: "Registration complete",
+        user: userWithoutPassword 
+      },
+      { status: 201 }
     );
 
     // Set a secure HTTP-only cookie with user info
@@ -218,7 +229,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Face registration error:", error);
     return NextResponse.json(
-      { success: false, message: "Error registering face: " + error.message },
+      { success: false, message: "Error registering: " + error.message },
       { status: 500 }
     );
   }

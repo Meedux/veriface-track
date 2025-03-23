@@ -19,6 +19,95 @@ export default function FaceVerification() {
   const [userData, setUserData] = useState(null);
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [email, setEmail] = useState('');
+  const [faceGuideVisible, setFaceGuideVisible] = useState(true);
+  const [captureAngle, setCaptureAngle] = useState('front'); // 'front', 'right', 'left'
+
+  // Draw face guide overlay to help position the entire face including chin
+  const drawFaceGuide = () => {
+    if (!canvasRef.current || !faceGuideVisible) return;
+    
+    const ctx = canvasRef.current.getContext('2d');
+    const { width, height } = canvasRef.current;
+    
+    // Clear canvas first
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw oval guide that's large enough to include the entire face
+    const centerX = width / 2;
+    const centerY = height / 2;
+    
+    // Adjust oval to be slightly longer vertically to account for chin
+    const radiusX = width * 0.22; // Horizontal radius
+    const radiusY = height * 0.32; // Vertical radius - make this larger to accommodate chin
+    
+    // Position oval slightly higher to encourage users to include chin
+    const offsetY = height * 0.03; // Small offset upward
+    
+    // Adjust offset based on capture angle for registration
+    let angleOffset = 0;
+    if (mode === 'register') {
+      if (captureAngle === 'right') {
+        angleOffset = width * 0.05; // Offset to the right
+      } else if (captureAngle === 'left') {
+        angleOffset = -width * 0.05; // Offset to the left
+      }
+    }
+    
+    // Draw oval
+    ctx.beginPath();
+    ctx.ellipse(centerX + angleOffset, centerY - offsetY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    // Add a slight fill for better visibility
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+    ctx.fill();
+    
+    // Add helper text based on capture angle
+    ctx.font = '16px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.textAlign = 'center';
+    
+    let helperText = 'Position your entire face including chin in this oval';
+    if (mode === 'register') {
+      if (captureAngle === 'front') {
+        helperText = 'Look straight ahead and position your face in the oval';
+      } else if (captureAngle === 'right') {
+        helperText = 'Turn your head slightly to the RIGHT and position your face';
+      } else if (captureAngle === 'left') {
+        helperText = 'Turn your head slightly to the LEFT and position your face';
+      }
+    }
+    
+    ctx.fillText(helperText, centerX, height - 30);
+    
+    // Add chin indicator
+    ctx.beginPath();
+    ctx.moveTo(centerX + angleOffset - 15, centerY + radiusY - offsetY - 15);
+    ctx.lineTo(centerX + angleOffset, centerY + radiusY - offsetY);
+    ctx.lineTo(centerX + angleOffset + 15, centerY + radiusY - offsetY - 15);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Add visual indicator for turning head direction
+    if (mode === 'register' && captureAngle !== 'front') {
+      const arrowWidth = 40;
+      const arrowHeight = 20;
+      const direction = captureAngle === 'right' ? 1 : -1;
+      
+      ctx.beginPath();
+      ctx.moveTo(centerX - arrowWidth * direction, centerY - 80);
+      ctx.lineTo(centerX + arrowWidth * direction, centerY - 80);
+      ctx.lineTo(centerX + arrowWidth * direction, centerY - 80 - arrowHeight / 2);
+      ctx.lineTo(centerX + (arrowWidth + arrowHeight) * direction, centerY - 80);
+      ctx.lineTo(centerX + arrowWidth * direction, centerY - 80 + arrowHeight / 2);
+      ctx.lineTo(centerX + arrowWidth * direction, centerY - 80);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fill();
+    }
+  };
 
   useEffect(() => {
     // Determine mode based on query param
@@ -62,11 +151,26 @@ export default function FaceVerification() {
         
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'user' }
+            video: { 
+              facingMode: 'user',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            }
           });
           
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
+            
+            // Make sure video dimensions are set correctly when metadata is loaded
+            videoRef.current.onloadedmetadata = () => {
+              if (canvasRef.current) {
+                canvasRef.current.width = videoRef.current.videoWidth;
+                canvasRef.current.height = videoRef.current.videoHeight;
+                
+                // Draw face guide initially
+                drawFaceGuide();
+              }
+            };
           }
         } else {
           setError('Camera not available on your device');
@@ -75,9 +179,10 @@ export default function FaceVerification() {
         setLoading(false);
         
         if (mode === 'register') {
-          setMessage('Position your face in the frame and click "Capture Face"');
+          setMessage('Position your entire face within the oval guide looking straight ahead');
+          setCaptureAngle('front');
         } else {
-          setMessage('Position your face in the frame to authenticate');
+          setMessage('Position your entire face within the oval guide to authenticate');
         }
       } catch (error) {
         console.error('Error initializing face recognition:', error);
@@ -97,6 +202,26 @@ export default function FaceVerification() {
       }
     };
   }, [searchParams, mode]);
+  
+  
+
+  // Calculate similarity between two face descriptors
+  const calculateSimilarity = (descriptor1, descriptor2) => {
+    if (!descriptor1 || !descriptor2) return 1;
+    
+    // Calculate Euclidean distance between descriptors
+    let sum = 0;
+    for (let i = 0; i < descriptor1.length; i++) {
+      sum += Math.pow(descriptor1[i] - descriptor2[i], 2);
+    }
+    const distance = Math.sqrt(sum);
+    
+    // Convert distance to similarity score (0-1)
+    // Lower distance means higher similarity
+    // For face-api.js, distance < 0.5 typically means same person
+    // Distance of 0 means identical, distance of 1+ means very different
+    return 1 - Math.min(distance, 1);
+  };
 
   const captureFace = async () => {
     if (!videoRef.current) return;
@@ -104,24 +229,91 @@ export default function FaceVerification() {
     try {
       setMessage('Capturing face...');
       
-      // Detect face and get descriptor
-      const detections = await faceapi.detectSingleFace(videoRef.current)
+      // Hide the face guide during capture
+      setFaceGuideVisible(false);
+      
+      // Use extended detection options to ensure we get the full face
+      const detectionOptions = new faceapi.SsdMobilenetv1Options({ 
+        minConfidence: 0.5,
+        // Increase the scoreThreshold slightly to ensure better quality detections
+        scoreThreshold: 0.6 
+      });
+      
+      // Detect face with full landmarks and descriptor
+      const detections = await faceapi.detectSingleFace(videoRef.current, detectionOptions)
         .withFaceLandmarks()
         .withFaceDescriptor();
       
       if (!detections) {
-        setMessage('No face detected. Please position your face properly and try again.');
+        setMessage('No face detected. Please position your entire face properly and try again.');
+        setFaceGuideVisible(true);
+        drawFaceGuide();
         return;
+      }
+      
+      // Check if the jawline is fully visible by examining the landmark points
+      const jawOutline = detections.landmarks.getJawOutline();
+      const allLandmarks = detections.landmarks.positions;
+      
+      // Validate that we have enough jawline points and they're in reasonable positions
+      if (jawOutline.length < 15) { // Full jawline should have 17 points
+        setMessage('Your entire face including chin must be visible. Please reposition.');
+        setFaceGuideVisible(true);
+        drawFaceGuide();
+        return;
+      }
+      
+      // Check jaw area completeness by looking at chin position relative to face box
+      const faceBox = detections.detection.box;
+      const chinPoint = jawOutline[8]; // Middle of chin
+      
+      // Calculate distance from chin to bottom of face box
+      const chinToBoxBottomDistance = Math.abs(faceBox.bottom - chinPoint.y);
+      const chinDistanceThreshold = faceBox.height * 0.1; // 10% of face height
+      
+      if (chinToBoxBottomDistance > chinDistanceThreshold) {
+        setMessage('Please ensure your chin is fully visible. Adjust your position.');
+        setFaceGuideVisible(true);
+        drawFaceGuide();
+        return;
+      }
+      
+      // For registration mode, check if this face is too similar to previous captures
+      if (mode === 'register' && faceDescriptors.length > 0) {
+        const currentDescriptor = Array.from(detections.descriptor);
+        
+        // Check similarity with all previous captures
+        for (let i = 0; i < faceDescriptors.length; i++) {
+          const prevDescriptor = faceDescriptors[i];
+          const similarity = calculateSimilarity(currentDescriptor, prevDescriptor);
+          
+          // If similarity is too high (above 0.8), reject the capture
+          if (similarity > 0.8) {
+            setMessage(`This angle is too similar to capture #${i+1}. Please turn your head ${captureAngle} more.`);
+            setFaceGuideVisible(true);
+            drawFaceGuide();
+            return;
+          }
+        }
       }
       
       // Draw face mesh on canvas for visual feedback
       if (canvasRef.current) {
-        const displaySize = { width: videoRef.current.width, height: videoRef.current.height };
+        const displaySize = { 
+          width: videoRef.current.videoWidth, 
+          height: videoRef.current.videoHeight 
+        };
+        
         faceapi.matchDimensions(canvasRef.current, displaySize);
         
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         const ctx = canvasRef.current.getContext('2d');
         ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        
+        // First draw the jawline with emphasis to ensure it's visible
+        drawEnhancedJawline(ctx, resizedDetections.landmarks);
+        
+        // Then draw the rest of the landmarks
         faceapi.draw.drawFaceLandmarks(canvasRef.current, resizedDetections);
       }
       
@@ -130,11 +322,22 @@ export default function FaceVerification() {
         setFaceDescriptors(prev => [...prev, Array.from(detections.descriptor)]);
         setCaptureCount(prev => prev + 1);
         
-        if (captureCount >= 2) {
-          setMessage('Face captured successfully! Finalizing registration...');
+        // Update capture angle for next capture
+        if (captureCount === 0) {
+          setCaptureAngle('right');
+          setMessage('Face captured! Now turn your head slightly to the RIGHT for the next capture.');
+        } else if (captureCount === 1) {
+          setCaptureAngle('left');
+          setMessage('Face captured! Now turn your head slightly to the LEFT for the final capture.');
         } else {
-          setMessage(`Face captured (${captureCount + 1}/3). Please move slightly and capture again.`);
+          setMessage('Face captured successfully! Finalizing registration...');
         }
+        
+        // Restore face guide after a short delay
+        setTimeout(() => {
+          setFaceGuideVisible(true);
+          drawFaceGuide();
+        }, 1500);
       } else {
         // Login mode - verify face immediately
         loginWithFace(Array.from(detections.descriptor));
@@ -142,7 +345,40 @@ export default function FaceVerification() {
     } catch (error) {
       console.error('Face capture error:', error);
       setMessage('Error capturing face');
+      setFaceGuideVisible(true);
+      drawFaceGuide();
     }
+  };
+  
+  // Function to draw enhanced jawline to ensure chin is captured
+  const drawEnhancedJawline = (ctx, landmarks) => {
+    if (!ctx || !landmarks) return;
+    
+    const jawOutline = landmarks.getJawOutline();
+    
+    // Draw jawline with more emphasis
+    ctx.beginPath();
+    ctx.moveTo(jawOutline[0].x, jawOutline[0].y);
+    
+    for (let i = 1; i < jawOutline.length; i++) {
+      ctx.lineTo(jawOutline[i].x, jawOutline[i].y);
+    }
+    
+    ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Add circles at key chin points for better visibility
+    const chinPoint = jawOutline[8]; // Middle of chin
+    const leftChin = jawOutline[6];
+    const rightChin = jawOutline[10];
+    
+    [chinPoint, leftChin, rightChin].forEach(point => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+      ctx.fill();
+    });
   };
 
   const loginWithFace = async (faceDescriptor) => {
@@ -182,6 +418,8 @@ export default function FaceVerification() {
       console.error('Face verification error:', error);
       setMessage(error.message || 'Face verification failed');
       setProcessing(false);
+      setFaceGuideVisible(true);
+      drawFaceGuide();
     }
   };
 
@@ -196,50 +434,61 @@ export default function FaceVerification() {
       return;
     }
     
+    // Verify the captures have sufficient variation before proceeding
+    const similarityMatrix = [];
+    for (let i = 0; i < faceDescriptors.length; i++) {
+      for (let j = i + 1; j < faceDescriptors.length; j++) {
+        const similarity = calculateSimilarity(faceDescriptors[i], faceDescriptors[j]);
+        similarityMatrix.push(similarity);
+      }
+    }
+    
+    // Calculate average similarity - if too high, captures are too similar
+    const avgSimilarity = similarityMatrix.reduce((sum, val) => sum + val, 0) / similarityMatrix.length;
+    if (avgSimilarity > 0.8) {
+      setMessage('Your face captures are too similar. Please retry with more distinct angles.');
+      return;
+    }
+    
     setProcessing(true);
     setMessage('Registering your face and creating account...');
     
     try {
-      // First, create the user account
-      const signUpResponse = await fetch('/api/auth/signup', {
+      // Register both account and face in a single API call to ensure atomicity
+      const registerResponse = await fetch('/api/auth/veriface/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: userData.username,
-          email: userData.email,
-          password: userData.password,
-          strand: userData.strand || ''
+          userData: {
+            name: userData.username,
+            email: userData.email,
+            password: userData.password,
+            strand: userData.strand || ''
+          },
+          faceData: {
+            faceDescriptors: faceDescriptors
+          }
         })
       });
       
-      const signUpData = await signUpResponse.json();
+      const data = await registerResponse.json();
       
-      if (!signUpResponse.ok) {
-        throw new Error(signUpData.message || 'Failed to create account');
-      }
-      
-      // Register face data with user account
-      const faceRegisterResponse = await fetch('/api/auth/veriface/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          faceDescriptor: faceDescriptors
-        })
-      });
-      
-      const faceRegisterData = await faceRegisterResponse.json();
-      
-      if (!faceRegisterResponse.ok) {
-        throw new Error(faceRegisterData.message || 'Face registration failed');
+      if (!registerResponse.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
       
       // Clear session storage
       sessionStorage.removeItem('signupData');
+      
+      // Save authentication data if provided
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       
       setMessage('Registration complete! Redirecting to dashboard...');
       
@@ -250,6 +499,30 @@ export default function FaceVerification() {
       setMessage(error.message || 'Registration failed');
       setProcessing(false);
     }
+  };
+  
+  // Retry capture button function
+  const retryCapture = () => {
+    if (mode === 'register' && captureCount > 0) {
+      // Remove the last face descriptor
+      setFaceDescriptors(prev => prev.slice(0, prev.length - 1));
+      setCaptureCount(prev => prev - 1);
+      
+      // Update capture angle based on new count
+      if (captureCount === 1) {  // Will be reduced to 0
+        setCaptureAngle('front');
+        setMessage('Retrying first capture. Look straight ahead.');
+      } else if (captureCount === 2) {  // Will be reduced to 1
+        setCaptureAngle('right');
+        setMessage('Retrying second capture. Turn your head slightly to the RIGHT.');
+      } else if (captureCount === 3) {  // Will be reduced to 2
+        setCaptureAngle('left');
+        setMessage('Retrying third capture. Turn your head slightly to the LEFT.');
+      }
+    }
+    
+    setFaceGuideVisible(true);
+    drawFaceGuide();
   };
 
   return (
@@ -299,13 +572,25 @@ export default function FaceVerification() {
           <p className="text-gray-700">{message}</p>
           
           {mode === 'register' && captureCount > 0 && (
-            <div className="flex justify-center mt-2 space-x-2">
-              {[...Array(3)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`w-3 h-3 rounded-full ${i < captureCount ? 'bg-green-500' : 'bg-gray-300'}`}
-                ></div>
-              ))}
+            <div className="flex flex-col items-center mt-2">
+              <div className="flex justify-center space-x-2 mb-2">
+                {[...Array(3)].map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-3 h-3 rounded-full ${i < captureCount ? 'bg-green-500' : 'bg-gray-300'}`}
+                  ></div>
+                ))}
+              </div>
+              
+              {/* Retry last capture button */}
+              {captureCount > 0 && !processing && (
+                <button 
+                  onClick={retryCapture} 
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Retry last capture
+                </button>
+              )}
             </div>
           )}
         </div>
